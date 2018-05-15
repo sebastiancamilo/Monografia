@@ -1,0 +1,840 @@
+from sklearn.linear_model import LinearRegression
+from numpy import linalg as LA
+from sympy import *
+import matplotlib.pyplot as plt
+#import matplotlib as plt
+plt.switch_backend('agg')
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
+path2="/hpcfs/home/sc.sanabria1984/momografia/rockstar/Rockstar-0.99.9-RC3/HALOS_50_512/out_0.list"
+path="/hpcfs/home/sc.sanabria1984/momografia/rockstar/Rockstar-0.99.9-RC3/HALOS_50/out_0.list"
+pathtv_256="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/FA.dat"
+patheigen1="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenval1.dat"
+patheigen2="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenval2.dat"
+patheigen3="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenval3.dat"
+path_eigenvec_1_0="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_1_0.dat" 
+path_eigenvec_1_1="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_1_1.dat"
+path_eigenvec_1_2="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_1_2.dat"
+path_eigenvec_2_0="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_2_0.dat"
+path_eigenvec_2_1="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_2_1.dat"
+path_eigenvec_2_2="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_2_2.dat"
+path_eigenvec_3_0="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_3_0.dat"
+path_eigenvec_3_1="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_3_1.dat"
+path_eigenvec_3_2="/hpcfs/home/sc.sanabria1984/momografia/tv_web/TV-Web/util/eigenvec_3_2.dat"
+
+
+f = open ( path_eigenvec_1_0 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_1_x = []
+eigenv_1_x = [[float(j) for j in i] for i in eigen]
+f = open ( path_eigenvec_1_1 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_1_y = []
+eigenv_1_y = [[float(j) for j in i] for i in eigen]
+f = open ( path_eigenvec_1_2 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_1_z = []
+eigenv_1_z = [[float(j) for j in i] for i in eigen]
+
+f = open ( path_eigenvec_2_0 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_2_x = []
+eigenv_2_x = [[float(j) for j in i] for i in eigen]
+f = open ( path_eigenvec_2_1 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_2_y = []
+eigenv_2_y = [[float(j) for j in i] for i in eigen]
+f = open ( path_eigenvec_2_2 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_2_z = []
+eigenv_2_z = [[float(j) for j in i] for i in eigen]
+
+
+f = open ( path_eigenvec_3_0 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_3_x = []
+eigenv_3_x = [[float(j) for j in i] for i in eigen]
+f = open ( path_eigenvec_3_1 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_3_y = []
+eigenv_3_y = [[float(j) for j in i] for i in eigen]
+f = open ( path_eigenvec_3_2 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigenv_3_z = []
+eigenv_3_z = [[float(j) for j in i] for i in eigen]
+
+###### cargar datos 50 mpc 512##########################################3
+f = open ( path2 , 'r')
+l2 = []
+l2 = [ line.split() for line in f]
+
+########## cargar datos 50 mpc 256
+
+f = open ( path2 , 'r')
+halos = []
+halos = [ line.split() for line in f]
+
+########### cargaar tv 256
+
+f = open ( pathtv_256 , 'r')
+tv = []
+tv= [ line.split() for line in f]
+FA = []
+FA = [[float(j) for j in i] for i in tv]
+##############################
+
+########### cargar eigen1
+
+f = open ( patheigen1 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigen1 = []
+eigen1 = [[float(j) for j in i] for i in eigen]
+##############################
+########### cargar eigen2
+
+f = open ( patheigen2 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigen2 = []
+eigen2 = [[float(j) for j in i] for i in eigen]
+##############################
+########### cargar eigen3
+
+f = open ( patheigen3 , 'r')
+eigen = []
+eigen= [ line.split() for line in f]
+eigen3 = []
+eigen3 = [[float(j) for j in i] for i in eigen]
+##############################
+imagelen=200
+image=np.zeros((imagelen,imagelen),dtype=float)
+void_ubi=[]
+
+
+
+def read_cut_v(eigen1,eigen2,eigen3,cut):
+   
+   eigen1=np.array(eigen1)
+   eigen2=np.array(eigen2)
+   eigen3=np.array(eigen3)
+   
+   l=eigen1.shape[1]
+   eigen1_cut=eigen1[cut*l:(cut+1)*l,:]
+   eigen2_cut=eigen2[cut*l:(cut+1)*l,:]
+   eigen3_cut=eigen3[cut*l:(cut+1)*l,:]
+   eigen1_cut=eigen1_cut
+   eigen2_cut=eigen2_cut
+   eigen3_cut=eigen3_cut
+   
+   return {'eigenx_cut':eigen1_cut,'eigeny_cut':eigen2_cut,'eigenz_cut':eigen3_cut}
+
+
+#a=read_cut_v(eigenv_1_x,eigenv_1_y,eigenv_1_z,0)
+#print a['eigenx_cut']
+
+####### aqui se leen los arrglos cubicos  y se escoge el corte cut, sale una matriz cuadrada ####################################
+
+
+def read_cut(eigen1,eigen2,eigen3,FA,cut):
+   FA=np.array(FA)
+   eigen1=np.array(eigen1)
+   eigen2=np.array(eigen2)
+   eigen3=np.array(eigen3)
+   #print FA
+   l=FA.shape[1]
+   FA_cut=FA[cut*l:(cut+1)*l,:]
+   eigen1_cut=eigen1[cut*l:(cut+1)*l,:]
+   eigen2_cut=eigen2[cut*l:(cut+1)*l,:]
+   eigen3_cut=eigen3[cut*l:(cut+1)*l,:]
+   eigen1_cut=eigen1_cut
+   eigen2_cut=eigen2_cut
+   eigen3_cut=eigen3_cut  
+   return {'eigen1_cut':eigen1_cut,'eigen2_cut':eigen2_cut,'eigen3_cut':eigen3_cut,'FA_cut':FA_cut}
+
+
+######### clasificacion de ambientes, sale , matriz de ambientes, las ubicaciones de los ambiente (i,j), y cuantos hay de cada uno############
+
+
+def classify_environment(eigen1,eigen2,eigen3):
+  void_ubi=[]
+  sheet_ubi=[]
+  filament_ubi=[]
+  peak_ubi=[]
+  num_void=0
+  num_sheet=0
+  num_filament=0
+  num_peak=0
+  image=np.zeros((len(eigen1),len(eigen2)),dtype=float)
+  for j in range(len(eigen1)):
+   for i in range(len(eigen1)):
+    count=0
+    a=eigen1[i][j]
+    b=eigen2[i][j]
+    c=eigen3[i][j]
+    if a>0.3:
+     count=count+1
+    if b>0.3:
+     count=count+1
+    if c>0.3:
+     count=count+1
+    if count==0:
+     image[i][j]=0
+     void_ubi.append((i,j))
+     num_void=num_void+1
+    if count==1:
+     image[i][j]=10
+     sheet_ubi.append((i,j))
+     num_sheet=num_sheet+1
+    if count==2:
+     image[i][j]=20
+     filament_ubi.append((i,j))
+     num_filament=num_filament+1
+    if count==3:
+     image[i][j]=30
+     peak_ubi.append((i,j))  
+     num_peak=num_peak+1
+   
+  num_all=[num_peak,num_filament,num_sheet,num_void] 
+    
+  return {'matrix_web':image,'peak_ubi':peak_ubi ,'filament_ubi':filament_ubi,'sheet_ubi':sheet_ubi,'void_ubi':void_ubi,'num_all':num_all}
+
+
+########### Aqui se ubican los halos de la lista de rockstar dentro de la matriz de corte, halos_ubi(posicion en i corte, posicion en j corte, indice aux[k] de posicion dentro de lista de rockstar)####################
+
+def cut_halos(halos,matrix,cut): #matrix no se esta utilizando
+ length_cut=50/200.0
+ aux=[]
+ xcut=[]
+ ycut=[]
+ 
+ for i in range(16,len(halos)):
+    if float(halos[i][10])<(cut+1)*length_cut and float(halos[i][10])>(cut)*length_cut: 
+	aux.append(i) # aux contiene los indices de los halos (en z) que estan dentro del corte cut
+
+ for i in range(len(aux)):
+    xcut.append(float(halos[aux[i]][8])) #xcut contine las posiciones de los halos (en x) que estan dentro del corte cut
+    ycut.append(float(halos[aux[i]][9])) #ycut lo mismo pero en y
+
+ indy=[]    
+ halos_ubi=[]
+ for k in range(len(xcut)): 
+    for j in range(len(image)):
+        for i in range(len(image)):
+            if xcut[k]<length_cut*(i+1) and xcut[k]>length_cut*i and ycut[k]<length_cut*(j+1) and ycut[k]>length_cut*j: 
+                 halos_ubi.append((i,j,aux[k]))
+                
+ return {'halos_ubi':halos_ubi,'matrix_halos':matrix,'xcut':xcut,'ycut':ycut}
+
+ 
+
+#fig = plt.figure(figsize=(20,20))
+#plt.imshow(results['matrix_halos'],extent=[0,50,50,0])
+#fig.savefig("test.jpg", bbox_inches='tight')
+# print results['num_all']
+
+
+################## aqui se encuentran que halo corresponde a un ambiente en espesifico,y se le ubica en la lista de rockstar (halos), salen las masas de halos del ambiente espesifico ###################################################
+
+def find_mass(halos_ubi,void_ubi):
+ halos_void=[]
+ for j in range(len(void_ubi)):
+  for i in range(len(halos_ubi)):
+   if halos_ubi[i][0]==void_ubi[j][0] and halos_ubi[i][1]==void_ubi[j][1]:
+     id=halos_ubi[i][2]
+     halos_void.append(float(halos[id][2])) #### halo_ubi[i][2]=indice del halo dentro de la lista de rockstar
+     
+ return {'mass':halos_void}
+
+
+
+
+
+
+
+################## funcion que hace histograma #########################################
+def make_hist(mass,num,test,name):
+ log_M=[]
+ den=[]
+ length_cut=50.0/200.0
+ mass=np.log10(mass)
+ hist, bins = np.histogram(mass, bins = 50)
+
+ width = (bins[1]-bins[0])
+
+ 
+ for i in range(len(hist)):  
+  if hist[i] == 0:
+    hist[i]=hist[i-1]
+ hist=np.log10(hist/(width*(num)*length_cut**3))
+ center = (bins[:-1]+bins[1:])/2
+ f = plt.figure()
+ plt.step(center,hist, where='mid',color='b')
+ plt.title("Hisograma funcion de masa " +name)
+ plt.xlabel("log(M)")
+ plt.ylabel("log(dn/dlog(M))")
+ f.savefig(test, bbox_inches='tight')
+ plt.close(f)
+ return 0
+
+################################### funcion que hace los histogramas de los cuatro ambientes  ####################################
+
+
+
+################################ ejecucion de funciones ##############################################
+ 
+def plot_tv_halos():
+ numf=0.0
+ numv=0.0
+ nums=0.0
+ nump=0.0
+ tot_h=0.0
+ fa=[]
+ tv=[]
+ for i in range(200):
+  
+  results=read_cut(eigen1,eigen2,eigen3,FA,i)
+  fa=results['FA_cut']
+  results=classify_environment(results['eigen1_cut'],results['eigen2_cut'],results['eigen3_cut']) 
+  tv=results['matrix_web']
+  numf=numf+results['num_all'][1]
+  numv=numv+results['num_all'][3]
+  nums=nums+results['num_all'][2]
+  nump=nump+results['num_all'][0]
+
+  
+  print results['num_all'],i
+  
+  results=cut_halos(halos,tv,i)
+  h=len(results['ycut'])
+  print h
+  tot_h=tot_h+h 
+  fig = plt.figure()
+  plt.imshow(fa,extent=[0,50,50,0])
+  plt.xlabel("Mpc/h",fontsize=20)
+  plt.ylabel("Mpc/h",fontsize=20)
+  plt.colorbar()
+  plt.scatter(results['xcut'],results['ycut'],s=0.01, c='black')
+  plt.title("FA con halos "+" z="+str(i)+" "+"halos="+str(h),fontsize=20)
+  fig.savefig("/hpcfs/home/sc.sanabria1984/momografia/rockstar/tv_halos_plots/"+str(i)+"halos_FA.pdf", bbox_inches='tight') 
+  plt.close(fig)
+
+  fig = plt.figure()
+  plt.imshow(tv,extent=[0,50,50,0])
+  plt.xlabel("Mpc/h",fontsize=20)
+  plt.ylabel("Mpc/h",fontsize=20)
+  plt.colorbar()
+  plt.scatter(results['xcut'],results['ycut'],s=0.01, c='black')
+  plt.title("Red cosmica con halos (Vacios, Hojas, Filamentos y Nudos)"+" z="+str(i)+" "+"halos="+str(h),fontsize=10)
+  fig.savefig("/hpcfs/home/sc.sanabria1984/momografia/rockstar/tv_halos_plots/"+str(i)+"halos_tv.pdf", bbox_inches='tight')
+  plt.close(fig)
+  
+ print tot_h,numv,nums,numf,nump
+ return 0 
+
+def halos_squere(halos_ubi,i,j):
+ halos_scq=[]
+ a=0
+ for n in range(len(halos_ubi)):
+   if halos_ubi[n][0]==i and halos_ubi[n][1]==j:
+     halos_scq.append(int(halos_ubi[n][2]))
+     
+
+   
+     
+ 
+ return {'halos_scq':halos_scq}
+
+def centro_m(halos_scq): 
+  
+ rcm=0.0
+ M=0.0
+ X=0.0
+ Y=0.0
+ Z=0.0
+ Vx=0.0
+ Vy=0.0
+ Vz=0.0
+ for i in range(len(halos_scq)):
+  
+  n=halos_scq[i]
+  m=float(halos[n][2])
+  x=float(halos[n][8])
+  y=float(halos[n][9])
+  z=float(halos[n][10])
+  vx=float(halos[n][11])
+  vy=float(halos[n][12])
+  vz=float(halos[n][13])
+  X=X+m*x
+  Y=Y+m*y
+  Z=Z+m*z
+  Vx=Vx+m*vx
+  Vy=Vy+m*vy
+  Vz=Vz+m*vz
+  M=M+m
+ rcm=[X/M,Y/M,Z/M]
+ vcm=[Vx/M,Vy/M,Vz/M]
+ return [rcm,vcm] 
+
+def inertia_vector(halos_scq,rcm):
+ r=[]
+ R=[]
+	
+ I=np.zeros((3,3))
+ for i in range(len(halos_scq)):
+  n=halos_scq[i]
+  x=rcm[0]-float(halos[n][8])
+  y=rcm[1]-float(halos[n][9])
+  z=rcm[2]-float(halos[n][10])
+  r.append([x,y,z])
+  
+ 
+ for j in range(3):
+  for i in range(3): 
+   for n in range(len(r)):
+    I[i][j]=I[i][j]+r[n][i]*r[n][j]/((r[n][0])**2+(r[n][1])**2+(r[n][2])**2)
+ 
+ 
+ w,v = LA.eig(I)
+ v_0=v[:,0]/LA.norm(v[:,0])
+ v_1=v[:,1]/LA.norm(v[:,1])
+ v_2=v[:,2]/LA.norm(v[:,2])
+ a={w[0]:v_0,w[1]:v_1,w[2]:v_2}
+ w.sort()
+
+ return [a[w[0]],a[w[1]],a[w[2]]]
+ 
+
+
+
+def histo(datos,nombre1,nombre2):
+ 
+ hist, bins = np.histogram(datos, bins = 50)
+ width = (bins[1]-bins[0])
+ center = (bins[:-1]+bins[1:])/2
+ model = LinearRegression(fit_intercept=True)
+ model.fit(center[:, np.newaxis], hist)
+ xfit = np.linspace(0, 1, 1000)
+ yfit = model.predict(xfit[:, np.newaxis])
+ 
+  
+ fig = plt.figure()
+ 
+ plt.step(center, hist, where='mid',color='b')
+ plt.plot(xfit, yfit)
+ plt.title("Histogram alineaciones"+" "+nombre1+ " con " +nombre2)
+ plt.xlabel(nombre1+"$\\bullet$"+nombre2)
+ plt.ylabel("casos")
+ fig.savefig("shape_"+ nombre1 +"_"+ nombre2 + ".jpg", bbox_inches='tight')
+ plt.close(fig)
+
+def histom(datosy,datos,nombre1,nombre2):
+
+ hist, bins = np.histogram(datos, bins = 100)
+ width = (bins[1]-bins[0])
+ center = (bins[:-1]+bins[1:])/2
+ model = LinearRegression(fit_intercept=True)
+ model.fit(center[:, np.newaxis], hist)
+ xfit = np.linspace(0, 1, 1000)
+ yfit = model.predict(xfit[:, np.newaxis])
+
+
+ fig = plt.figure()
+
+ plt.step(center, hist, where='mid',color='b')
+ plt.plot(xfit, yfit)
+ plt.title("Histogram alineaciones"+" "+nombre1+ " con " +nombre2)
+ plt.xlabel(nombre1+"$\\bullet$"+nombre2)
+ plt.ylabel("casos")
+ fig.savefig("shape_"+ nombre1 +"_"+ nombre2 + ".jpg", bbox_inches='tight')
+ plt.close(fig)
+ return 0
+
+def peso_est(datos,nombre1,nombre2):
+ Y=np.linspace(0.0, 1.0, len(datos))
+ Y2=np.linspace(0.0, 1.0, len(datos))
+ X2=np.linspace(0.0, 1.0, len(datos))
+ 
+ datos.sort()
+ 
+ print np.median(datos),nombre1,nombre2
+ fig = plt.figure()
+ plt.plot(datos,Y,'r')
+ plt.plot(X2,Y2,'k--', linewidth=0.5)
+ plt.title("Lineamientos"+" "+nombre1+ " con " +nombre2)
+ plt.xlabel("$\\cos \\theta$")
+ plt.axis([0, 1, 0, 1])
+ plt.ylabel("Lineamiento")
+ fig.savefig("lineamiento"+ nombre1 +"_"+ nombre2 + ".jpg", bbox_inches='tight')
+ plt.close(fig)
+ return 0 
+
+
+
+def plot_histo_cube():
+ 
+ w=0
+ h_1=0
+ h_2=0
+ mass_all=[]
+ mass_void=[]
+ mass_sheet=[]
+ mass_filament=[]
+ mass_peak=[]
+ for cut in range(200):
+  Mh=[]
+  a=cut_halos(halos,0,cut)
+  a=a['halos_ubi']
+  w=w+len(a)
+  results=read_cut(eigen1,eigen2,eigen3,FA,cut)
+  fa=results['FA_cut']
+  results=classify_environment(results['eigen1_cut'],results['eigen2_cut'],results['eigen3_cut'])
+  tv=results['matrix_web']
+  for j in range(200):
+   for i in range(200):
+
+    b=halos_squere(a,i,j)
+    b=b['halos_scq']
+    if len(b)>2:
+     mass_scq=0.0
+     
+     for n in range(len(b)):
+      mass_scq=mass_scq+float(halos[b[n]][2])
+     
+     mass_all.append(mass_scq)
+     if tv[i][j]==0:
+       mass_void.append(mass_scq) 
+     if tv[i][j]==10:
+       mass_sheet.append(mass_scq)
+     if tv[i][j]==20:
+       mass_filament.append(mass_scq)
+     if tv[i][j]==30:
+       mass_peak.append(mass_scq)
+ 
+ v=len(mass_void)
+ h=len(mass_sheet)
+ f=len(mass_filament)
+ n=len(mass_peak)
+ make_hist(mass_all,v+h+f+n,"histo_all.jpg","(todo)")
+ make_hist(mass_void,v,"histo_v.jpg","(vacios)")
+ make_hist(mass_sheet,h,"histo_h.jpg","(hojas)")
+ make_hist(mass_filament,f,"histo_f.jpg","(filamentos)")
+ make_hist(mass_peak,n,"histo_n.jpg","(nudos)")
+ 
+ return 0
+
+
+
+def plot_liniamientos():
+ dot_vcm_e1=[]
+ dot_vcm_e2=[]
+ dot_vcm_e3=[]
+ a1=[]
+ a2=[]
+ a3=[] 
+ dot_Ix_e1=[]
+ dot_Iy_e1=[]
+ dot_Iz_e1=[]
+ dot_Ix_e2=[]
+ dot_Iy_e2=[]
+ dot_Iz_e2=[]
+ dot_Ix_e3=[]
+ dot_Iy_e3=[]
+ dot_Iz_e3=[]
+ w=0
+ h_1=0
+ h_2=0
+ h=0
+ h_3=0
+ print "masa_celda","e1[0]","e1[1]","e1[2]","e2[0]","e2[1]","e2[2]","e3[0]","e3[0]","e3[1]","e3[2]","vcm[0]","vcm[1]","vcm[2]","I[0]","I[1]","I[2]"
+ for cut in range(200):
+  Mh=[]
+  a=cut_halos(halos,0,cut)
+  a=a['halos_ubi']
+  w=w+len(a)
+  results=read_cut(eigen1,eigen2,eigen3,FA,cut)
+  fa=results['FA_cut']
+  results=classify_environment(results['eigen1_cut'],results['eigen2_cut'],results['eigen3_cut'])
+  tv=results['matrix_web']
+  eigenv=read_cut_v(eigenv_1_x,eigenv_1_y,eigenv_1_z,cut)
+  e1_x=eigenv['eigenx_cut']
+  e1_y=eigenv['eigeny_cut']
+  e1_z=eigenv['eigenz_cut']
+  eigenv=read_cut_v(eigenv_2_x,eigenv_2_y,eigenv_2_z,cut)
+  e2_x=eigenv['eigenx_cut']
+  e2_y=eigenv['eigeny_cut']
+  e2_z=eigenv['eigenz_cut']
+  eigenv=read_cut_v(eigenv_3_x,eigenv_3_y,eigenv_3_z,cut)
+  e3_x=eigenv['eigenx_cut']
+  e3_y=eigenv['eigeny_cut']
+  e3_z=eigenv['eigenz_cut']
+
+  for j in range(200):
+   for i in range(200):
+   
+    b=halos_squere(a,i,j)
+    b=b['halos_scq']
+    mass_scq=0.0
+    for n in range(len(b)):
+      mass_scq=mass_scq+float(halos[b[n]][2])
+    if mass_scq<10**10:
+     if len(b)==1:
+      h_1=h_1+1
+     if len(b)==2:
+      h_2=h_2+1
+     if len(b)==0:
+      h_3=h_3+1
+     if len(b)>2:
+      h=h+1
+      cm=centro_m(b)
+      I_v=inertia_vector(b,cm[0])
+        
+      e1=[e1_x[i][j],e1_y[i][j],e1_z[i][j]]
+      e2=[e2_x[i][j],e2_y[i][j],e2_z[i][j]]
+      e3=[e3_x[i][j],e3_y[i][j],e3_z[i][j]]
+     
+  
+      e1=e1/LA.norm(e1)
+      e2=e2/LA.norm(e2)
+      e3=e3/LA.norm(e3)
+      vcm=cm[1]/LA.norm(cm[1])
+     
+      dot_vcm_e1.append(np.abs(np.dot(vcm,e1)))
+      dot_vcm_e2.append(np.abs(np.dot(vcm,e2)))
+      dot_vcm_e3.append(np.abs(np.dot(vcm,e3)))
+     
+         
+   
+      dot_Ix_e1.append(np.abs(np.dot(I_v[0],e1)))
+      dot_Iy_e1.append(np.abs(np.dot(I_v[1],e1)))
+      dot_Iz_e1.append(np.abs(np.dot(I_v[2],e1)))
+      dot_Ix_e2.append(np.abs(np.dot(I_v[0],e2)))
+      dot_Iy_e2.append(np.abs(np.dot(I_v[1],e2)))
+      dot_Iz_e2.append(np.abs(np.dot(I_v[2],e2)))
+      dot_Ix_e3.append(np.abs(np.dot(I_v[0],e3)))
+      dot_Iy_e3.append(np.abs(np.dot(I_v[1],e3)))
+      dot_Iz_e3.append(np.abs(np.dot(I_v[2],e3)))
+     
+
+     
+      #print mass_scq,e1[0],e1[1],e1[2],e2[0],e2[1],e2[2],e3[0],e3[0],e3[1],e3[2],vcm[0],vcm[1],vcm[2],I_v[0],I_v[1],I_v[2]
+
+
+ peso_est(dot_vcm_e1,"v_cm","e_1")
+ peso_est(dot_vcm_e2,"v_cm","e_2")
+ peso_est(dot_vcm_e3,"v_cm","e_3")
+ peso_est(dot_Ix_e1,"I_menor","e_1")
+ peso_est(dot_Iy_e1,"I_medio","e_1")
+ peso_est(dot_Iz_e1,"I_mayor","e_1")
+ peso_est(dot_Ix_e2,"I_menor","e_2")
+ peso_est(dot_Iy_e2,"I_medio","e_2")
+ peso_est(dot_Iz_e2,"I_mayor","e_2")
+ peso_est(dot_Ix_e3,"I_menor","e_3")
+ peso_est(dot_Iy_e3,"I_medio","e_3")
+ peso_est(dot_Iz_e3,"I_mayor","e_3")
+
+ #histo(dot_vcm_e1,"v_cm","e_1")
+ #histo(dot_vcm_e2,"v_cm","e_2")
+ #histo(dot_vcm_e3,"v_cm","e_3")
+ #histo(dot_Ix_e1,"I_menor","e1")
+ #histo(dot_Iy_e1,"I_medio","e1")
+ #histo(dot_Iz_e1,"I_mayor","e1")
+ #histo(dot_Ix_e2,"I_menor","e2")
+ #histo(dot_Iy_e2,"I_medio","e2")
+ #histo(dot_Iz_e2,"I_mayor","e2")
+ #histo(dot_Ix_e3,"I_menor","e3")
+ #histo(dot_Iy_e3,"I_medio","e3")
+ #histo(dot_Iz_e3,"I_mayor","e3")
+ 
+ print h_1,h_2,h_3,h,w,200**3
+ return 0
+
+    
+def plot_mass_fun_ambi(): 
+ tv_mass_filament=[]
+ tv_mass_peak=[]
+ tv_mass_void=[]
+ tv_mass_sheet=[]
+ tv_mass_all=[]
+
+ n=0.0
+ f=0.0
+ h=0.0
+ v=0.0
+
+ for i in range(200):       ######### se itera para 200 cortes del eje z del cubo
+
+  results=read_cut(eigen1,eigen2,eigen3,FA,i)
+  
+  results=classify_environment(results['eigen1_cut'],results['eigen2_cut'],results['eigen3_cut'])
+ 
+  results0=cut_halos(halos,0,i)
+ 
+  n=n+results['num_all'][0]
+  f=f+results['num_all'][1]
+  h=h+results['num_all'][2]
+  v=v+results['num_all'][3]
+  #print len(results0['halos_ubi'])
+
+  
+  results1=find_mass(results0['halos_ubi'],results['filament_ubi'])
+  for j in range(len(results1['mass'])):
+   tv_mass_filament.append(results1['mass'][j])
+   tv_mass_all.append(results1['mass'][j])
+
+  results1=find_mass(results0['halos_ubi'],results['peak_ubi'])
+  for j in range(len(results1['mass'])):
+   tv_mass_peak.append(results1['mass'][j]) 
+   tv_mass_all.append(results1['mass'][j])
+ 
+  results1=find_mass(results0['halos_ubi'],results['sheet_ubi'])
+  for j in range(len(results1['mass'])):
+   tv_mass_sheet.append(results1['mass'][j])
+   tv_mass_all.append(results1['mass'][j])
+ 
+  results1=find_mass(results0['halos_ubi'],results['void_ubi'])
+  for j in range(len(results1['mass'])):
+   tv_mass_void.append(results1['mass'][j])
+   tv_mass_all.append(results1['mass'][j])
+  
+
+ 
+ #make_hist_mult(tv_mass_peak,a,tv_mass_filament,b,tv_mass_sheet,c,tv_mass_void,d)
+ make_hist(tv_mass_all,500000,"test_all.jpg","(todo)")
+ make_hist(tv_mass_all,v+h+f+n,"test_all2.jpg","(todo)")
+ make_hist(tv_mass_void,v,"test_v.jpg","(vacios)")
+ make_hist(tv_mass_sheet,h,"test_h.jpg","(hojas)")
+ make_hist(tv_mass_filament,f,"test_f.jpg","(filamentos)")
+ make_hist(tv_mass_peak,n,"test_n.jpg","(nudos)")
+ print len(tv_mass_peak),len(tv_mass_filament),len(tv_mass_sheet),len(tv_mass_void),len(tv_mass_all)
+ print n,f,h,v,n+f+h+v
+ return(0)
+
+
+def halos_ambi_cut_info(halos_ubi,ambi_ubi,n_ambi,k,e1x,e1y,e1z,e2x,e2y,e2z,e3x,e3y,e3z):
+ for j in range(len(ambi_ubi)):
+  for i in range(len(halos_ubi)):
+   if halos_ubi[i][0]==ambi_ubi[j][0] and halos_ubi[i][1]==ambi_ubi[j][1]:
+    id=halos_ubi[i][2]
+   
+    print n_ambi,halos_ubi[i][0],halos_ubi[i][1],k,halos[id][2],halos[id][8],halos[id][9],halos[id][10],halos[id][11],halos[id][12],halos[id][13],e1x[halos_ubi[i][0]][halos_ubi[i][1]],e1y[halos_ubi[i][0]][halos_ubi[i][1]],e1z[halos_ubi[i][0]][halos_ubi[i][1]],e2x[halos_ubi[i][0]][halos_ubi[i][1]],e2y[halos_ubi[i][0]][halos_ubi[i][1]],e2z[halos_ubi[i][0]][halos_ubi[i][1]],e3x[halos_ubi[i][0]][halos_ubi[i][1]],e3y[halos_ubi[i][0]][halos_ubi[i][1]],e3z[halos_ubi[i][0]][halos_ubi[i][1]]
+
+ return 0
+def halos_ambi_all_info():
+ print "n_ambi","i","j","k","m","posx","posy","posz","velx","vely","velz","e1x","e1y","e1z","e2x","e2y","e2z","e3x","e3y","e3z"
+ for cut in range(200):
+
+  eigenv=read_cut_v(eigenv_1_x,eigenv_1_y,eigenv_1_z,cut)
+  e1_x=eigenv['eigenx_cut']
+  e1_y=eigenv['eigeny_cut']
+  e1_z=eigenv['eigenz_cut']
+ 
+  eigenv=read_cut_v(eigenv_2_x,eigenv_2_y,eigenv_2_z,cut)
+  e2_x=eigenv['eigenx_cut']
+  e2_y=eigenv['eigeny_cut']
+  e2_z=eigenv['eigenz_cut']
+
+  eigenv=read_cut_v(eigenv_3_x,eigenv_3_y,eigenv_3_z,cut)
+  e3_x=eigenv['eigenx_cut']
+  e3_y=eigenv['eigeny_cut']
+  e3_z=eigenv['eigenz_cut']
+
+  results=read_cut(eigen1,eigen2,eigen3,FA,cut)
+  
+  results=classify_environment(results['eigen1_cut'],results['eigen2_cut'],results['eigen3_cut'])
+  
+  results0=cut_halos(halos,0,cut)
+   
+  halos_ambi_cut_info(results0['halos_ubi'],results['void_ubi'],0,cut,e1_x,e1_y,e1_z,e2_x,e2_y,e2_z,e3_x,e3_y,e3_z)
+  halos_ambi_cut_info(results0['halos_ubi'],results['filament_ubi'],2,cut,e1_x,e1_y,e1_z,e2_x,e2_y,e2_z,e3_x,e3_y,e3_z)
+  halos_ambi_cut_info(results0['halos_ubi'],results['sheet_ubi'],1,cut,e1_x,e1_y,e1_z,e2_x,e2_y,e2_z,e3_x,e3_y,e3_z)
+  halos_ambi_cut_info(results0['halos_ubi'],results['peak_ubi'],3,cut,e1_x,e1_y,e1_z,e2_x,e2_y,e2_z,e3_x,e3_y,e3_z)
+ 
+ return 0
+def plot_eigenv_tv():
+ for cut in range(200):
+  results=read_cut(eigen1,eigen2,eigen3,FA,cut)
+  results=classify_environment(results['eigen1_cut'],results['eigen2_cut'],results['eigen3_cut'])
+  tv=results['matrix_web']
+  eigenv=read_cut_v(eigenv_1_x,eigenv_1_y,eigenv_1_z,cut)
+  e1_x=eigenv['eigenx_cut']
+  e1_y=eigenv['eigeny_cut']
+  e1_z=eigenv['eigenz_cut']
+  eigenv=read_cut_v(eigenv_2_x,eigenv_2_y,eigenv_2_z,cut)
+  e2_x=eigenv['eigenx_cut']
+  e2_y=eigenv['eigeny_cut']
+  e2_z=eigenv['eigenz_cut']
+  eigenv=read_cut_v(eigenv_3_x,eigenv_3_y,eigenv_3_z,cut)
+  e3_x=eigenv['eigenx_cut']
+  e3_y=eigenv['eigeny_cut']
+  e3_z=eigenv['eigenz_cut']
+  X, Y = np.meshgrid(np.arange(0.5, 200.5, 1), np.arange(0.5, 200.5, 1))
+  for j in range(200):
+   for i in range(200): 
+     e1_norm=LA.norm([e1_x[i][j],e1_y[i][j],e1_z[i][j]])    
+     e2_norm=LA.norm([e2_x[i][j],e2_y[i][j],e2_z[i][j]])
+     e3_norm=LA.norm([e3_x[i][j],e3_y[i][j],e3_z[i][j]])
+     e1_x[i][j]=e1_x[i][j]/e1_norm
+     e1_y[i][j]=e1_y[i][j]/e1_norm
+     e1_z[i][j]=e1_z[i][j]/e1_norm
+     e2_x[i][j]=e2_x[i][j]/e2_norm
+     e2_y[i][j]=e2_y[i][j]/e2_norm
+     e2_z[i][j]=e2_z[i][j]/e2_norm
+     e3_x[i][j]=e3_x[i][j]/e3_norm
+     e3_y[i][j]=e3_y[i][j]/e3_norm
+     e3_z[i][j]=e3_z[i][j]/e3_norm
+  
+  fig=plt.figure()
+  plt.title('e1')
+  plt.axis('equal')
+  
+  plt.quiver(X, Y, e1_x,e1_y, units='width')
+  plt.savefig('e1_tv.jpg')
+  plt.close(fig)  
+  fig=plt.figure()
+  plt.title('e2')
+  plt.axis('equal')
+  
+  plt.quiver(X, Y, e2_x,e2_y, units='width')
+  plt.savefig('e2_tv.jpg')
+  plt.close(fig)
+  fig=plt.figure()
+  plt.title('e3')
+  plt.axis('equal')
+  
+  plt.quiver(X, Y, e3_x,e3_y, units='width')
+  plt.savefig('e3_tv.jpg')
+  plt.close(fig)
+ 
+  fig=plt.figure()
+  plt.title('e1')
+  plt.axis('equal')
+  plt.imshow(tv)
+  plt.savefig('e4_tv.jpg')
+  plt.close(fig)
+
+ return 0
+
+
+
+
+#plot_eigenv_tv()
+plot_liniamientos()
+#plot_tv_halos()
+#plot_mass_fun_ambi()
+#halos_ambi_all_info()
+#plot_histo_cube()
+
+
+
+#print 'go'
